@@ -53,7 +53,7 @@ class FlutterSummernoteState extends State<FlutterSummernote> {
   final _imagePicker = ImagePicker();
   late bool _hasAttachment;
 
-  late final WebViewController? _webViewController;
+  WebViewController? _webViewController;
 
   void handleRequest(HttpRequest request) {
     try {
@@ -75,41 +75,48 @@ class FlutterSummernoteState extends State<FlutterSummernote> {
     _webViewController = WebViewController();
 
     _webViewController!.setJavaScriptMode(JavaScriptMode.unrestricted);
-    _webViewController!.addJavaScriptChannel('GetTextSummernote',
-        onMessageReceived: (JavaScriptMessage message) {
-      String isi = message.message;
-      if (isi.isEmpty ||
-          isi == '<p></p>' ||
-          isi == '<p><br></p>' ||
-          isi == '<p><br/></p>') {
-        isi = '';
-      }
-      setState(() {
-        text = isi;
-      });
-      if (widget.returnContent != null) {
-        widget.returnContent!(text);
-      }
-    });
+    _webViewController!.addJavaScriptChannel(
+      'GetTextSummernote',
+      onMessageReceived: (JavaScriptMessage message) {
+        String isi = message.message;
+        if (isi.isEmpty ||
+            isi == '<p></p>' ||
+            isi == '<p><br></p>' ||
+            isi == '<p><br/></p>') {
+          isi = '';
+        }
+        setState(() {
+          text = isi;
+        });
+        if (widget.returnContent != null) {
+          widget.returnContent!(text);
+        }
+      },
+    );
 
-    _webViewController!
-        .setNavigationDelegate(NavigationDelegate(onPageFinished: (String url) {
-      if (widget.hint != null) {
-        setHint(widget.hint);
-      } else {
-        setHint('');
-      }
+    _webViewController!.setNavigationDelegate(
+      NavigationDelegate(
+        onPageFinished: (String url) {
+          if (widget.hint != null) {
+            setHint(widget.hint);
+          } else {
+            setHint('');
+          }
 
-      setFullContainer();
-      if (widget.value != null) {
-        setText(widget.value!);
-      }
-    }));
+          setFullContainer();
+          if (widget.value != null) {
+            setText(widget.value!);
+          }
+        },
+      ),
+    );
 
-    final String contentBase64 =
-        base64Encode(const Utf8Encoder().convert(_page));
-    _webViewController!
-        .loadRequest(Uri.parse('data:text/html;base64,$contentBase64'));
+    final String contentBase64 = base64Encode(
+      const Utf8Encoder().convert(_page),
+    );
+    _webViewController!.loadRequest(
+      Uri.parse('data:text/html;base64,$contentBase64'),
+    );
   }
 
   @override
@@ -124,7 +131,8 @@ class FlutterSummernoteState extends State<FlutterSummernote> {
   Widget build(BuildContext context) {
     return Container(
       height: widget.height ?? MediaQuery.of(context).size.height,
-      decoration: widget.decoration ??
+      decoration:
+          widget.decoration ??
           BoxDecoration(
             borderRadius: const BorderRadius.all(Radius.circular(4)),
             border: Border.all(color: const Color(0xffececec), width: 1),
@@ -140,7 +148,7 @@ class FlutterSummernoteState extends State<FlutterSummernote> {
               padding: const EdgeInsets.all(16.0),
               child: Row(children: _generateBottomToolbar(context)),
             ),
-          )
+          ),
         ],
       ),
     );
@@ -157,15 +165,17 @@ class FlutterSummernoteState extends State<FlutterSummernote> {
             Clipboard.setData(ClipboardData(text: data));
           },
           child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: const <Widget>[Icon(Icons.content_copy), Text('Copy')]),
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const <Widget>[Icon(Icons.content_copy), Text('Copy')],
+          ),
         ),
       ),
       Expanded(
         child: GestureDetector(
           onTap: () async {
-            ClipboardData data = await (Clipboard.getData(Clipboard.kTextPlain)
-                as FutureOr<ClipboardData>);
+            ClipboardData data =
+                await (Clipboard.getData(Clipboard.kTextPlain)
+                    as FutureOr<ClipboardData>);
 
             String txtIsi = data.text!
                 .replaceAll("'", '\\"')
@@ -180,30 +190,27 @@ class FlutterSummernoteState extends State<FlutterSummernote> {
             _webViewController!.runJavaScript(txt);
           },
           child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: const <Widget>[
-                Icon(Icons.content_paste),
-                Text('Paste'),
-              ]),
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const <Widget>[Icon(Icons.content_paste), Text('Paste')],
+          ),
         ),
-      )
+      ),
     ];
 
     if (_hasAttachment) {
       //add attachment widget
       toolbar.insert(
-          0,
-          Expanded(
-            child: GestureDetector(
-              onTap: () => _attach(context),
-              child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: const <Widget>[
-                    Icon(Icons.attach_file),
-                    Text('Attach')
-                  ]),
+        0,
+        Expanded(
+          child: GestureDetector(
+            onTap: () => _attach(context),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const <Widget>[Icon(Icons.attach_file), Text('Attach')],
             ),
-          ));
+          ),
+        ),
+      );
     }
 
     return toolbar;
@@ -237,8 +244,9 @@ class FlutterSummernoteState extends State<FlutterSummernote> {
 
   /// [setFullContainer] to set full summernote form
   void setFullContainer() {
-    _webViewController!
-        .runJavaScript('\$("#summernote").summernote("fullscreen.toggle");');
+    _webViewController!.runJavaScript(
+      '\$("#summernote").summernote("fullscreen.toggle");',
+    );
   }
 
   /// [setFocus] to focus summernote form
@@ -263,21 +271,18 @@ class FlutterSummernoteState extends State<FlutterSummernote> {
       onTap: onTap as void Function()?,
       child: Row(
         children: <Widget>[
-          Icon(
-            icon,
-            color: Colors.black38,
-            size: 20,
-          ),
+          Icon(icon, color: Colors.black38, size: 20),
           Padding(
             padding: const EdgeInsets.only(left: 4),
             child: Text(
               title,
               style: const TextStyle(
-                  color: Colors.black54,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w400),
+                color: Colors.black54,
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+              ),
             ),
-          )
+          ),
         ],
       ),
     );
@@ -366,9 +371,11 @@ class FlutterSummernoteState extends State<FlutterSummernote> {
   /// [_attach] to create attached button
   void _attach(BuildContext context) {
     showModalBottomSheet(
-        context: context,
-        builder: (context) {
-          return Column(mainAxisSize: MainAxisSize.min, children: <Widget>[
+      context: context,
+      builder: (context) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
             ListTile(
               leading: const Icon(Icons.camera_alt),
               title: const Text('Camera'),
@@ -389,14 +396,17 @@ class FlutterSummernoteState extends State<FlutterSummernote> {
                 if (image != null) _addImage(image);
               },
             ),
-          ]);
-        });
+          ],
+        );
+      },
+    );
   }
 
   /// [_getImage] to get image from summernote
   Future<XFile?> _getImage(bool fromCamera) async {
     final picked = await _imagePicker.pickImage(
-        source: (fromCamera) ? ImageSource.camera : ImageSource.gallery);
+      source: (fromCamera) ? ImageSource.camera : ImageSource.gallery,
+    );
     if (picked != null) {
       return XFile(picked.path);
     } else {
